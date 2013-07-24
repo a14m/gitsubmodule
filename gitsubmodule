@@ -124,7 +124,6 @@ function check_vim_directory()
 function parse_git_modules_file()
 {
     #read file line by line
-    lineNum=0
     submoduleNum=0
 
     #read the file
@@ -134,10 +133,6 @@ function parse_git_modules_file()
     submodulePattern='submodule'
     submodulePathPattern='path'
     while read LINE <&3; do
-        #increment the line to get
-        lineNum=`expr $lineNum + 1`;
-
-        echo $LINE
 
         #grep to get the line containg the name of the submodule
         submoduleLine=$(echo "$LINE" | grep $submodulePattern)
@@ -174,9 +169,9 @@ function parse_git_modules_file()
     elif [ $chooseSubmoduleFlag == true ];then
         #remove is issued but without providing the submodule to remove
         #get the module you want to delete from the list of available modules
-        echo "TODO choose submodule to delete "
         prompt_module_num paths[@]
-        echo ${paths[`expr $chosenNum - 1`]}
+        submoduleToRemove=${paths[`expr $chosenNum - 1`]}
+        remove_submodule $submoduleToRemove
     fi
 }
 
@@ -229,6 +224,20 @@ function check_submodule_valid()
     foundSubmodule=false
     declare -a paths=("${!1}")
     #check if valid submodule was provided
+    numOfSubmoduleMatch=0
+    for i in "${paths[@]}";do
+        desiredSubmoduleLine=$(echo "$i" | grep $submoduleToRemove )
+        if [ ${#desiredSubmoduleLine} -gt 0 ]; then
+            matchedPaths[$numOfSubmoduleMatch]=$i
+            numOfSubmoduleMatch=`expr $numOfSubmoduleMatch + 1`
+        fi
+    done
+
+    if [ $numOfSubmoduleMatch -gt 1 ];then
+        echo 'this name matches more than 1 submodule'
+        prompt_module_num matchedPaths[@]
+    fi
+
     for i in "${paths[@]}";do
         submoduleLine=$(echo "$i" | grep $submoduleToRemove)
         if [ ${#submoduleLine} -gt 0 ]; then
@@ -253,6 +262,7 @@ function check_submodule_valid()
 function remove_submodule()
 {
     CURDIR=$(pwd)
+    #$1 is $submoduleToRemove
     echo -e "${yellow}Deleting :${NC} $1"
     #remove from .gitmodules
     parse_git_file_for_deleting_submodule_chunks $REPODIR/.gitmodules $1
@@ -276,6 +286,7 @@ function remove_submodule()
 #delete the submodule chunks in the specific files
 function parse_git_file_for_deleting_submodule_chunks()
 {
+    #$2 is $submoduleToRemove
     #read file line by line
     lineNum=0
 
@@ -318,7 +329,6 @@ function parse_git_file_for_deleting_submodule_chunks()
     sed -i -e "$startdelete,$enddelete""d" $1
 
 }
-
 
 #Main
 clear
