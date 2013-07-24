@@ -1,0 +1,321 @@
+#!/bin/bash
+
+#Constants
+
+#the directory to use script with
+REPODIR=$(pwd)
+#uncomment the next line to bind the script to the vim directory
+REPODIR="$HOME/testing"
+
+#-d flag indicator 
+dirFlag=false
+
+#-u flag indicator
+updateFlag=false
+
+#-r flag is used without specifing the submodule
+chooseSubmoduleFlag=false
+#-r XXX flag indicator
+removeFlag=false
+submoduleToRemove=
+
+#some colors used in the echo
+red='\e[0;31m'
+green='\e[0;32m'
+yellow='\e[0;33m'
+cyan='\e[0;36m'
+NC='\e[0m' # No Color
+
+
+#Functions
+function check_flags()
+{
+    #check the flags user used
+    if [ $# -le 0 ];then
+        echo "no param help"
+        exit 0
+    fi
+
+    while test $# -gt 0; do
+        case "$1" in
+            -h|--help) 
+                echo "help"
+                exit 0
+                ;;
+            -d|--dir) 
+                shift
+                if test $# -gt 0; then
+                    dirFlag=true
+                    REPODIR=$1
+                fi
+                shift
+                ;;
+            -u|--update|update)
+                updateFlag=true
+                shift
+                if test $# -gt 0; then
+                    if [ $1 == 'help' ];then
+                        echo "update help"
+                        exit 0
+                    else
+                        echo "NOT SUPPORTED"
+                        exit 0
+                    fi
+                fi
+                ;;
+            -r|--remove|remove)
+                shift
+                chooseSubmoduleFlag=true
+                if test $# -gt 0; then
+                    removeFlag=true
+                    submoduleToRemove=$1
+                    if [ $submoduleToRemove == 'help' ];then
+                        echo "remove help"
+                        exit 0
+                    fi
+                fi
+                shift
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+}
+
+function check_directory()
+{
+
+    #first check the flags user used
+    check_flags $@
+
+    #check if the REPODIR is valid
+    if [ -d $REPODIR ];then
+        #found a valid directory
+        check_vim_directory
+    elif [ $dirFlag == true ];then
+        #used -d but the directory is incorrect directory
+        echo "$REPODIR : doesn't look like a directory">&2
+        exit 0
+    else
+        #a valid directory but didn't find any .gitmodules in it, but you didn't used -d options
+        echo "$REPODIR : directory doesn't have \".gitmodules\" file, Please use -d [directory]">&2
+        exit 0
+    fi
+}
+
+function check_vim_directory()
+{
+    #check if the directory contains .gitmodules file
+    if [ -f "$REPODIR/.gitmodules" ] ;then
+        echo -e "${green}Reading : ${NC}.gitmodules file"
+        #strip the  names and paths of the submodules in the file
+        parse_git_modules_file "$REPODIR/.gitmodules"
+    else
+        #the -d directory provided doesn't contain any .gitmodules
+        echo -e "$REPODIR : directory doesn't have \".gitmodules\" file">&2
+        exit 0
+    fi
+}
+
+function parse_git_modules_file()
+{
+    #read file line by line
+    lineNum=0
+    submoduleNum=0
+
+    #read the file
+    exec<$1
+
+    # the grep patterns used to find the submodules and the paths
+    submodulePattern='submodule'
+    submodulePathPattern='path'
+    while read LINE ; do
+        #increment the line to get
+        lineNum=`expr $lineNum + 1`;
+
+        #grep to get the line containg the name of the submodule
+        submoduleLine=$(echo "$LINE" | grep $submodulePattern)
+
+        #getting the name of the submodule
+        #if [ ${#submoduleLine} -gt 0 ]; then
+            ##strip the name of the submodule from [submodule "XXX"]
+            #submodules[$submoduleNum]=${submoduleLine:12:-2}
+        #fi
+
+        #grep to get the line containg the path of the submodule
+        submodulePathLine=$(echo "$LINE" | grep $submodulePathPattern)
+        if [ ${#submodulePathLine} -gt 0 ]; then
+            #strip the path of the submodule from path = "XXX/XXX
+            paths[$submoduleNum]=${submodulePathLine:7}
+
+            #increment the numbers of submodules after getting the name and path
+            submoduleNum=$((submoduleNum+1))
+        fi
+    done
+
+    #restore the stdin after reading the file
+    exec<&1
+
+    #issue update procedure
+    if [ $updateFlag == true ];then
+        update_all_submodules paths[@] 
+    fi
+
+    #issue remove procedure
+    if [ $removeFlag == true ];then
+        #a submodule have been provided in the args
+        echo -e "${green}Checking :${NC} $submoduleToRemove"
+        check_submodule_valid paths[@]
+    elif [ $chooseSubmoduleFlag == true ];then
+        #remove is issued but without providing the submodule to remove
+        #get the module you want to delete from the list of available modules
+        chosenNum=$(prompt_module_num paths[@])
+        echo $chosenNum
+    fi
+
+}
+
+function prompt_module_num() 
+{ 
+    declare -a paths=("${!1}")
+    while true;do
+        moduleNum=0
+        chosenNum=0
+        echo "Available submodules :"
+        for i in "${paths[@]}";do
+            moduleNum=`expr $moduleNum + 1`;
+            echo " $moduleNum) $i"
+        done
+        read -p "Please choose the submodule you want to remove : " chosenNum
+        if [[ $chosenNum -le $moduleNum && $chosenNum -gt 0 ]];then
+            return $chosenNum
+        fi
+    done
+}
+
+#update submodule
+#procedure :
+#   1) cd submodule
+#   2) stash the changes in the submodule
+#   3) check out master branch to fix an issue where you are on (no-branch)
+#   4) git pull latest changes
+#   5) reapply stashed changes
+function update_all_submodules()
+{
+    #recive the passed array of paths
+    declare -a paths=("${!1}")
+    CURDIR=$(pwd)
+    for i in "${paths[@]}";do
+        cd $REPODIR/$i
+        echo -e "${yellow}Updating : ${NC}`pwd`"
+        git stash 1>/dev/null 2>&1
+        git checkout master 1>/dev/null 2>&1
+        echo -e "`git pull`\n"
+        git pull 1>/dev/null 2>&1
+        git stash apply 1>/dev/null 2>&1
+    done
+    cd $CURDIR
+    echo -e "\n\t${cyan}#### Please commit and push your changes now if any #### ${NC}"
+}
+
+# check if the entered submodule is valid
+function check_submodule_valid()
+{
+    foundSubmodule=false
+    declare -a paths=("${!1}")
+    #check if valid submodule was provided
+    for i in "${paths[@]}";do
+        submoduleLine=$(echo "$i" | grep $submoduleToRemove)
+        if [ ${#submoduleLine} -gt 0 ]; then
+            foundSubmodule=true
+            submoduleToRemove=$submoduleLine
+        fi
+    done
+    if [ $foundSubmodule == false ];then
+        echo -e "${red}Submodule :${NC} ${submoduleToRemove}${red} was not found.${NC}"
+        exit 0
+    fi
+    remove_submodule $submoduleToRemove
+}
+
+#remove submodule
+#procedure :
+#   1) remove the submodule part from .gitmodules
+#   2) remove the submodule part from .git/config
+#   3) remove the the submodule cached directory
+#   4) remove the submodule from .git/modules directory
+#   5) remove the submodule directory
+function remove_submodule()
+{
+    CURDIR=$(pwd)
+    echo -e "${yellow}Deleting :${NC} $1"
+    #remove from .gitmodules
+    parse_git_file_for_deleting_submodule_chunks $REPODIR/.gitmodules $1
+    
+    cd $REPODIR
+        #git stash 1>/dev/null 2>&1
+    git add $REPODIR/.gitmodules
+
+    parse_git_file_for_deleting_submodule_chunks $REPODIR/.git/config $1
+    git rm --cached $REPODIR/$1 1>/dev/null 2>&1
+    rm -rf $REPODIR/.git/modules/$1 1>/dev/null 2>&1
+    rm -rf $REPODIR/$1 1>/dev/null 2>&1
+
+    git commit -m "Removed submodule $1 using gitsubmodule script" 1>/dev/null 2>&1 
+
+    cd $CURDIR
+    echo -e "${green}Deleted :${NC} $1 ${green}successfully${NC}"
+    echo -e "\n\t${cyan}#### Please push the changes #### ${NC}"
+}
+
+#delete the submodule chunks in the specific files
+function parse_git_file_for_deleting_submodule_chunks()
+{
+    #read file line by line
+    lineNum=0
+
+    #used this to avoid using subshell to avoid losing the arrays values
+    exec<$1
+
+    # the grep patterns used to find the submodule to delete within the submodules
+    submodulePattern='submodule'
+    desiredSubmodulePattern=$2
+    deleteThisSubmodule=false
+    while read LINE ; do
+
+        #increment the line to get
+        lineNum=`expr $lineNum + 1`;
+
+        #grep to get the line containg the name of the submodule
+        submoduleLine=$(echo "$LINE" | grep $submodulePattern)
+        desiredSubmoduleLine=$(echo "$LINE" | grep $desiredSubmodulePattern)
+
+        #assuming the wrong submodule
+        if [ ${#submoduleLine} -gt 0 ]; then
+            deleteThisSubmodule=false
+        fi
+        
+        #found the desired submodule to delete
+        if [[ ${#desiredSubmoduleLine} -gt 0 && ${#submoduleLine} -gt 0 ]];then
+            #flag this module for deletion
+            deleteThisSubmodule=true
+            #setting the line number we start deleting
+            startdelete=$lineNum
+        fi
+        
+        #while in the module to delete setting the end of the deletion to this line
+        if [ $deleteThisSubmodule == true ];then
+            enddelete=$lineNum
+        fi
+    done
+    #echo $startdelete,$enddelete
+    sed -i -e "$startdelete,$enddelete""d" $1
+}
+
+
+#Main
+clear
+check_directory $@
+
+exit 0
