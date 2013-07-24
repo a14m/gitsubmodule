@@ -8,19 +8,19 @@ REPODIR=$(pwd)
 REPODIR="$HOME/testing"
 
 #-d flag indicator 
-dirFlag=false
+DIR_FLAG=false
 
 #-u flag indicator
-updateFlag=false
+UPDATE_FLAG=false
 
 #-r flag is used without specifing the submodule
-chooseSubmoduleFlag=false
+REMOVE_FLAG=false
 
 #-r submodule flag indicator
-removeFlag=false
+REMOVE_FLAG_SPECIFIC_SUBMODULE=false
 
 #chosen submodule for deletion
-submoduleToRemove=
+SUBMODULE_TO_REMOVE=
 
 #some colors used in the echo
 red='\e[0;31m'
@@ -48,13 +48,13 @@ function check_flags()
             -d|--dir) 
                 shift
                 if test $# -gt 0; then
-                    dirFlag=true
+                    DIR_FLAG=true
                     REPODIR=$1
                 fi
                 shift
                 ;;
             -u|--update|update)
-                updateFlag=true
+                UPDATE_FLAG=true
                 shift
                 if test $# -gt 0; then
                     if [ $1 == 'help' ];then
@@ -68,11 +68,11 @@ function check_flags()
                 ;;
             -r|--remove|remove)
                 shift
-                chooseSubmoduleFlag=true
+                REMOVE_FLAG=true
                 if test $# -gt 0; then
-                    removeFlag=true
-                    submoduleToRemove=$1
-                    if [ $submoduleToRemove == 'help' ];then
+                    REMOVE_FLAG_SPECIFIC_SUBMODULE=true
+                    SUBMODULE_TO_REMOVE=$1
+                    if [ $SUBMODULE_TO_REMOVE == 'help' ];then
                         echo "remove help"
                         exit 0
                     fi
@@ -96,13 +96,13 @@ function check_directory()
     if [ -d $REPODIR ];then
         #found a valid directory
         check_vim_directory
-    elif [ $dirFlag == true ];then
+    elif [ $DIR_FLAG == true ];then
         #used -d but the directory is incorrect directory
-        echo "$REPODIR : doesn't look like a directory">&2
+        echo -e "$REPODIR : doesn't look like a directory">&2
         exit 0
     else
         #a valid directory but didn't find any .gitmodules in it, but you didn't used -d options
-        echo "$REPODIR : directory doesn't have \".gitmodules\" file, Please use -d [directory]">&2
+        echo -e "$REPODIR : directory doesn't have \".gitmodules\" file, Please use -d [directory]">&2
         exit 0
     fi
 }
@@ -123,55 +123,42 @@ function check_vim_directory()
 
 function parse_git_modules_file()
 {
+    GIT_MODULES_FILE=$1
     #read file line by line
-    submoduleNum=0
-
-    #read the file
-    #exec < $1
+    NUMBER_OF_SUBMODULES=0
 
     # the grep patterns used to find the submodules and the paths
-    submodulePattern='submodule'
-    submodulePathPattern='path'
+    SUBMODULE_PATH_PATTERN='path'
     while read LINE <&3; do
 
-        #grep to get the line containg the name of the submodule
-        submoduleLine=$(echo "$LINE" | grep $submodulePattern)
-
-        #getting the name of the submodule
-        #if [ ${#submoduleLine} -gt 0 ]; then
-            ##strip the name of the submodule from [submodule "XXX"]
-            #submodules[$submoduleNum]=${submoduleLine:12:-2}
-        #fi
-
-        #grep to get the line containg the path of the submodule
-        submodulePathLine=$(echo "$LINE" | grep $submodulePathPattern)
-        if [ ${#submodulePathLine} -gt 0 ]; then
+        SUBMODULE_LINE=$(echo "$LINE" | grep $SUBMODULE_PATH_PATTERN)
+        if [ ${#SUBMODULE_LINE} -gt 0 ]; then
             #strip the path of the submodule from path = "XXX/XXX
-            paths[$submoduleNum]=${submodulePathLine:7}
+            paths[$NUMBER_OF_SUBMODULES]=${SUBMODULE_LINE:7}
 
             #increment the numbers of submodules after getting the name and path
-            submoduleNum=$((submoduleNum+1))
+            NUMBER_OF_SUBMODULES=$((NUMBER_OF_SUBMODULES+1))
         fi
-    done 3< $1
+    done 3< $GIT_MODULES_FILE
 
     #restore the stdin after reading the file
 
     #issue update procedure
-    if [ $updateFlag == true ];then
+    if [ $UPDATE_FLAG == true ];then
         update_all_submodules paths[@] 
     fi
 
     #issue remove procedure
-    if [ $removeFlag == true ];then
+    if [ $REMOVE_FLAG_SPECIFIC_SUBMODULE == true ];then
         #a submodule have been provided in the args
-        echo -e "${green}Checking :${NC} $submoduleToRemove"
+        echo -e "${green}Checking :${NC} $SUBMODULE_TO_REMOVE"
         check_submodule_valid paths[@]
-    elif [ $chooseSubmoduleFlag == true ];then
+    elif [ $REMOVE_FLAG == true ];then
         #remove is issued but without providing the submodule to remove
         #get the module you want to delete from the list of available modules
         prompt_module_num paths[@]
-        submoduleToRemove=${paths[`expr $chosenNum - 1`]}
-        remove_submodule $submoduleToRemove
+        SUBMODULE_TO_REMOVE=${paths[`expr $PROMPT_CHOSEN_NUMBER - 1`]}
+        remove_submodule $SUBMODULE_TO_REMOVE
     fi
 }
 
@@ -179,16 +166,16 @@ function prompt_module_num()
 { 
     declare -a paths=("${!1}")
     while true;do
-        moduleNum=0
-        chosenNum=0
-        echo "Available submodules :"
+        MODULE_NUM=0
+        PROMPT_CHOSEN_NUMBER=0
+        echo -e "Available submodules :"
         for i in "${paths[@]}";do
-            moduleNum=`expr $moduleNum + 1`;
-            echo " $moduleNum) $i"
+            MODULE_NUM=`expr $MODULE_NUM + 1`;
+            echo -e " $MODULE_NUM) $i"
         done
-        read -p "Please choose the submodule you want to remove : " chosenNum
-        if [[ $chosenNum -le $moduleNum && $chosenNum -gt 0 ]];then
-            return $chosenNum
+        read -p "Please choose the submodule you want to remove : " PROMPT_CHOSEN_NUMBER
+        if [[ $PROMPT_CHOSEN_NUMBER -le $MODULE_NUM && $PROMPT_CHOSEN_NUMBER -gt 0 ]];then
+            return $PROMPT_CHOSEN_NUMBER
         fi
     done
 }
@@ -221,35 +208,37 @@ function update_all_submodules()
 # check if the entered submodule is valid
 function check_submodule_valid()
 {
-    foundSubmodule=false
+    IS_SUBMODULE_FOUND=false
+    ENTERED_VALUE=$SUBMODULE_TO_REMOVE
     declare -a paths=("${!1}")
     #check if valid submodule was provided
-    numOfSubmoduleMatch=0
+    NUM_SUBMODULES_MATCHES=0
     for i in "${paths[@]}";do
-        desiredSubmoduleLine=$(echo "$i" | grep $submoduleToRemove )
-        if [ ${#desiredSubmoduleLine} -gt 0 ]; then
-            matchedPaths[$numOfSubmoduleMatch]=$i
-            numOfSubmoduleMatch=`expr $numOfSubmoduleMatch + 1`
+        DESIRED_SUBMODULE_LINE=$(echo "$i" | grep $SUBMODULE_TO_REMOVE )
+        if [ ${#DESIRED_SUBMODULE_LINE} -gt 0 ]; then
+            matchedPaths[$NUM_SUBMODULES_MATCHES]=$i
+            NUM_SUBMODULES_MATCHES=`expr $NUM_SUBMODULES_MATCHES + 1`
         fi
     done
 
-    if [ $numOfSubmoduleMatch -gt 1 ];then
-        echo 'this name matches more than 1 submodule'
+    if [ $NUM_SUBMODULES_MATCHES -gt 1 ];then
+        #TODO
+        echo -e "${yellow}Found more than 1 match to${NC} $ENTERED_VALUE"
         prompt_module_num matchedPaths[@]
     fi
 
     for i in "${paths[@]}";do
-        submoduleLine=$(echo "$i" | grep $submoduleToRemove)
-        if [ ${#submoduleLine} -gt 0 ]; then
-            foundSubmodule=true
-            submoduleToRemove=$submoduleLine
+        SUBMODULE_LINE=$(echo "$i" | grep $SUBMODULE_TO_REMOVE)
+        if [ ${#SUBMODULE_LINE} -gt 0 ]; then
+            IS_SUBMODULE_FOUND=true
+            SUBMODULE_TO_REMOVE=$SUBMODULE_LINE
         fi
     done
-    if [ $foundSubmodule == false ];then
-        echo -e "${red}Submodule :${NC} ${submoduleToRemove}${red} was not found.${NC}"
+    if [ $IS_SUBMODULE_FOUND == false ];then
+        echo -e "${red}Submodule :${NC} ${SUBMODULE_TO_REMOVE}${red} was not found.${NC}"
         exit 0
     fi
-    remove_submodule $submoduleToRemove
+    remove_submodule
 }
 
 #remove submodule
@@ -262,76 +251,73 @@ function check_submodule_valid()
 function remove_submodule()
 {
     CURDIR=$(pwd)
-    #$1 is $submoduleToRemove
-    echo -e "${yellow}Deleting :${NC} $1"
+    echo -e "${yellow}Deleting :${NC} $SUBMODULE_TO_REMOVE"
     #remove from .gitmodules
-    parse_git_file_for_deleting_submodule_chunks $REPODIR/.gitmodules $1
+    parse_git_file_for_deleting_submodule_chunks $REPODIR/.gitmodules
     
     cd $REPODIR
         #git stash 1>/dev/null 2>&1
     git add $REPODIR/.gitmodules
 
-    parse_git_file_for_deleting_submodule_chunks $REPODIR/.git/config $1
-    git rm --cached $REPODIR/$1 1>/dev/null 2>&1
-    rm -rf $REPODIR/.git/modules/$1 1>/dev/null 2>&1
-    rm -rf $REPODIR/$1 1>/dev/null 2>&1
+    parse_git_file_for_deleting_submodule_chunks $REPODIR/.git/config
+    git rm --cached $REPODIR/$SUBMODULE_TO_REMOVE 1>/dev/null 2>&1
+    rm -rf $REPODIR/.git/modules/$SUBMODULE_TO_REMOVE 1>/dev/null 2>&1
+    rm -rf $REPODIR/$SUBMODULE_TO_REMOVE 1>/dev/null 2>&1
 
-    git commit -m "Removed submodule $1 using gitsubmodule script" 1>/dev/null 2>&1 
+    git commit -m "Removed submodule $SUBMODULE_TO_REMOVE using gitsubmodule script" 1>/dev/null 2>&1 
 
     cd $CURDIR
-    echo -e "${green}Deleted :${NC} $1 ${green}successfully${NC}"
+    echo -e "${green}Deleted :${NC} $SUBMODULE_TO_REMOVE ${green}successfully${NC}"
     echo -e "\n\t${cyan}#### Please push the changes #### ${NC}"
 }
 
 #delete the submodule chunks in the specific files
 function parse_git_file_for_deleting_submodule_chunks()
 {
-    #$2 is $submoduleToRemove
+    local GIT_FILE_TO_EDIT=$1
+
     #read file line by line
-    lineNum=0
+    LINE_NUM=0
 
     #used this to avoid using subshell to avoid losing the arrays values
-    #TODO fix this
-    exec < $1
+    exec < $GIT_FILE_TO_EDIT
 
     # the grep patterns used to find the submodule to delete within the submodules
-    submodulePattern='submodule'
-    desiredSubmodulePattern=$2
-    deleteThisSubmodule=false
+    SUBMODULE_PATTERN='submodule'
+    DESIRED_SUBMODULE_PATTERN=$SUBMODULE_TO_REMOVE
+    MARK_SUBMODULE_FOR_DELETION=false
     while read LINE ; do
 
         #increment the line to get
-        lineNum=`expr $lineNum + 1`;
+        LINE_NUM=`expr $LINE_NUM + 1`;
 
         #grep to get the line containg the name of the submodule
-        submoduleLine=$(echo "$LINE" | grep $submodulePattern)
-        desiredSubmoduleLine=$(echo "$LINE" | grep $desiredSubmodulePattern)
+        SUBMODULE_LINE=$(echo "$LINE" | grep $SUBMODULE_PATTERN)
+        DESIRED_SUBMODULE_LINE=$(echo "$LINE" | grep $DESIRED_SUBMODULE_PATTERN)
 
         #assuming the wrong submodule
-        if [ ${#submoduleLine} -gt 0 ]; then
-            deleteThisSubmodule=false
+        if [ ${#SUBMODULE_LINE} -gt 0 ]; then
+            MARK_SUBMODULE_FOR_DELETION=false
         fi
         
         #found the desired submodule to delete
-        if [[ ${#desiredSubmoduleLine} -gt 0 && ${#submoduleLine} -gt 0 ]];then
+        if [[ ${#DESIRED_SUBMODULE_LINE} -gt 0 && ${#SUBMODULE_LINE} -gt 0 ]];then
             #flag this module for deletion
-            deleteThisSubmodule=true
+            MARK_SUBMODULE_FOR_DELETION=true
             #setting the line number we start deleting
-            startdelete=$lineNum
+            MARK_DELETION_START=$LINE_NUM
         fi
         
         #while in the module to delete setting the end of the deletion to this line
-        if [ $deleteThisSubmodule == true ];then
-            enddelete=$lineNum
+        if [ $MARK_SUBMODULE_FOR_DELETION == true ];then
+            MARK_DELETION_END=$LINE_NUM
         fi
     done
-    #echo $startdelete,$enddelete
-    sed -i -e "$startdelete,$enddelete""d" $1
+    sed -i -e "$MARK_DELETION_START,$MARK_DELETION_END""d" $GIT_FILE_TO_EDIT
 
 }
 
 #Main
-clear
 check_directory $@
 
 exit 0
