@@ -19,15 +19,17 @@ REMOVE_FLAG=false
 #-r submodule flag indicator
 REMOVE_FLAG_SPECIFIC_SUBMODULE=false
 
+VERSION="2013.07.24"
+
 #chosen submodule for deletion
 SUBMODULE_TO_REMOVE=
 
 #some colors used in the echo
-red='\e[0;31m'
-green='\e[0;32m'
-yellow='\e[0;33m'
-cyan='\e[0;36m'
-NC='\e[0m' # No Color
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[0;33m'
+cyan='\033[0;36m'
+NC='\033[0m' # No Color
 
 
 #Functions
@@ -35,15 +37,13 @@ function check_flags()
 {
     #check the flags user used
     if [ $# -le 0 ];then
-        echo "no param help"
-        exit 0
+        show_help
     fi
 
     while test $# -gt 0; do
         case "$1" in
             -h|--help) 
-                echo "help"
-                exit 0
+                show_help
                 ;;
             -d|--dir) 
                 shift
@@ -58,11 +58,7 @@ function check_flags()
                 shift
                 if test $# -gt 0; then
                     if [ $1 == '--help' ];then
-                        echo "update help"
-                        exit 0
-                    else
-                        echo -e "UPDATING SPECIFIC SUBMODULE IS NOT YET SUPPORTED"
-                        exit 0
+                        show_update_help
                     fi
                 fi
                 ;;
@@ -74,21 +70,80 @@ function check_flags()
                     SUBMODULE_TO_REMOVE=$1
                     if [ $SUBMODULE_TO_REMOVE == '--help' ];then
                         show_remove_help
-                        exit 0
                     fi
                 fi
                 shift
                 ;;
+            --version)
+                echo -e "gitsubmodule version $VERSION"
+                exit 0
+                ;;
             *)
-                break
+                echo -e "illegal option"
+                show_help
                 ;;
         esac
     done
 }
 
+#gitsubmodule remove --help
 function show_remove_help()
 {
-    echo 'remove help'
+    echo -e "usage: gitsubmodule -r|--remove|remove [--help|=<submodule>]"
+    echo -e ""
+    echo -e "if no submodule was passed the script will find all the available submodules"
+    echo -e "and will prompt the user to choose one of them to delete"
+    echo -e "if submodule was provided the script will find all the available matches to this submodule"
+    echo -e "and will prompt the user to choose one of the matches to delete if more than 1 match occured"
+    echo -e "or will automatically delete if only 1 match found"
+    echo -e ""
+    echo -e "procedure :"
+    echo -e "   1) remove the submodule part from .gitmodules"
+    echo -e "   2) remove the submodule part from .git/config"
+    echo -e "   3) remove the the submodule cached directory"
+    echo -e "   4) remove the submodule from .git/modules directory"
+    echo -e "   5) commit the changes to the modified files only"
+    echo -e "   6) remove the submodule directory"
+    exit 0
+}
+
+#gitsubmodule update --help
+function show_update_help()
+{
+    echo -e "usage: gitsubmodule -u|--updtae|update [--help]"
+    echo -e ""
+    echo -e "Updates the available submodules found in the .gitmodules file"
+    echo -e "procedure :"
+    echo -e "  1) cd into the submodule directory"
+    echo -e "  2) stash the changes in the submodule"
+    echo -e "  3) check out master branch to fix an issue where you are on (no-branch)"
+    echo -e "  4) git pull latest changes"
+    echo -e "  5) reapply stashed changes"
+    exit 0
+}
+
+#gitsubmodule --help
+function show_help()
+{
+    echo -e "usage: gitsubmodule [options | options[args]]"
+    echo -e ""
+    echo -e "Options:"
+    echo -e " Genral Options:"
+    echo -e "  -h,--help \t\tprint this help text and exit"
+    echo -e "  --version \t\tprint this script version and exit"
+    echo -e "  -d,--dir  \t\tprovide the directory of the repo by default it's the current directoy"
+    echo -e "  -u,--update,update \tissue update of the available submodules in the repo"
+    echo -e "  \t\t\tcan also check update help using 'gitsubmodule update --help'"
+    echo -e "  -r,--remove,remove \tprompt the user to choose one of the available submodules to remove"
+    echo -e "  \t\t\tgitsubmodule remove XXX will search for matching to XXX and will remove if only found 1 match found"
+    echo -e "  \t\t\tand will prompt user to select one of the matches if more than 1 match found"
+    echo -e "  \t\t\tcan also check remove help using 'gitsubmodule remove --help'"
+    echo -e ""
+    echo -e "See 'gitsubmodule [remove|update] --help ' for specific help info"
+    echo -e ""
+    echo -e "Script source 'https://github.com/artmees/gitsubmodule'"
+    echo -e "github page   'https://artmees.github.io/gitsubmodule'"
+    exit 0
 }
 
 function check_directory()
