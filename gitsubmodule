@@ -15,8 +15,11 @@ updateFlag=false
 
 #-r flag is used without specifing the submodule
 chooseSubmoduleFlag=false
-#-r XXX flag indicator
+
+#-r submodule flag indicator
 removeFlag=false
+
+#chosen submodule for deletion
 submoduleToRemove=
 
 #some colors used in the echo
@@ -125,14 +128,16 @@ function parse_git_modules_file()
     submoduleNum=0
 
     #read the file
-    exec<$1
+    #exec < $1
 
     # the grep patterns used to find the submodules and the paths
     submodulePattern='submodule'
     submodulePathPattern='path'
-    while read LINE ; do
+    while read LINE <&3; do
         #increment the line to get
         lineNum=`expr $lineNum + 1`;
+
+        echo $LINE
 
         #grep to get the line containg the name of the submodule
         submoduleLine=$(echo "$LINE" | grep $submodulePattern)
@@ -152,10 +157,9 @@ function parse_git_modules_file()
             #increment the numbers of submodules after getting the name and path
             submoduleNum=$((submoduleNum+1))
         fi
-    done
+    done 3< $1
 
     #restore the stdin after reading the file
-    exec<&1
 
     #issue update procedure
     if [ $updateFlag == true ];then
@@ -170,10 +174,10 @@ function parse_git_modules_file()
     elif [ $chooseSubmoduleFlag == true ];then
         #remove is issued but without providing the submodule to remove
         #get the module you want to delete from the list of available modules
-        chosenNum=$(prompt_module_num paths[@])
-        echo $chosenNum
+        echo "TODO choose submodule to delete "
+        prompt_module_num paths[@]
+        echo ${paths[`expr $chosenNum - 1`]}
     fi
-
 }
 
 function prompt_module_num() 
@@ -276,7 +280,8 @@ function parse_git_file_for_deleting_submodule_chunks()
     lineNum=0
 
     #used this to avoid using subshell to avoid losing the arrays values
-    exec<$1
+    #TODO fix this
+    exec < $1
 
     # the grep patterns used to find the submodule to delete within the submodules
     submodulePattern='submodule'
@@ -311,6 +316,7 @@ function parse_git_file_for_deleting_submodule_chunks()
     done
     #echo $startdelete,$enddelete
     sed -i -e "$startdelete,$enddelete""d" $1
+
 }
 
 
