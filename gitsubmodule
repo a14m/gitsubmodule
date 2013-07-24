@@ -57,11 +57,11 @@ function check_flags()
                 UPDATE_FLAG=true
                 shift
                 if test $# -gt 0; then
-                    if [ $1 == 'help' ];then
+                    if [ $1 == '--help' ];then
                         echo "update help"
                         exit 0
                     else
-                        echo "NOT SUPPORTED"
+                        echo -e "UPDATING SPECIFIC SUBMODULE IS NOT YET SUPPORTED"
                         exit 0
                     fi
                 fi
@@ -72,8 +72,8 @@ function check_flags()
                 if test $# -gt 0; then
                     REMOVE_FLAG_SPECIFIC_SUBMODULE=true
                     SUBMODULE_TO_REMOVE=$1
-                    if [ $SUBMODULE_TO_REMOVE == 'help' ];then
-                        echo "remove help"
+                    if [ $SUBMODULE_TO_REMOVE == '--help' ];then
+                        show_remove_help
                         exit 0
                     fi
                 fi
@@ -84,6 +84,11 @@ function check_flags()
                 ;;
         esac
     done
+}
+
+function show_remove_help()
+{
+    echo 'remove help'
 }
 
 function check_directory()
@@ -141,7 +146,11 @@ function parse_git_modules_file()
         fi
     done 3< $GIT_MODULES_FILE
 
-    #restore the stdin after reading the file
+    #check empty gitmodules file
+    if [ ${#paths[@]} == 0 ];then
+        echo -e "${yellow}No submodules were found in the .gitmodules file${NC}"
+        exit 0
+    fi
 
     #issue update procedure
     if [ $UPDATE_FLAG == true ];then
@@ -158,15 +167,16 @@ function parse_git_modules_file()
         #get the module you want to delete from the list of available modules
         prompt_module_num paths[@]
         SUBMODULE_TO_REMOVE=${paths[`expr $PROMPT_CHOSEN_NUMBER - 1`]}
-        remove_submodule $SUBMODULE_TO_REMOVE
+        remove_submodule
     fi
 }
 
+#used to prompt the user when more than 1 submodule is matched
 function prompt_module_num() 
 { 
     declare -a paths=("${!1}")
     while true;do
-        MODULE_NUM=0
+        local MODULE_NUM=0
         PROMPT_CHOSEN_NUMBER=0
         echo -e "Available submodules :"
         for i in "${paths[@]}";do
@@ -191,7 +201,7 @@ function update_all_submodules()
 {
     #recive the passed array of paths
     declare -a paths=("${!1}")
-    CURDIR=$(pwd)
+    local CURDIR=$(pwd)
     for i in "${paths[@]}";do
         cd $REPODIR/$i
         echo -e "${yellow}Updating : ${NC}`pwd`"
@@ -208,11 +218,13 @@ function update_all_submodules()
 # check if the entered submodule is valid
 function check_submodule_valid()
 {
-    IS_SUBMODULE_FOUND=false
-    ENTERED_VALUE=$SUBMODULE_TO_REMOVE
+    #TODO 
+    local ENTERED_VALUE=$SUBMODULE_TO_REMOVE
     declare -a paths=("${!1}")
     #check if valid submodule was provided
-    NUM_SUBMODULES_MATCHES=0
+    local NUM_SUBMODULES_MATCHES=0
+
+    #check more than 1 match happend
     for i in "${paths[@]}";do
         DESIRED_SUBMODULE_LINE=$(echo "$i" | grep $SUBMODULE_TO_REMOVE )
         if [ ${#DESIRED_SUBMODULE_LINE} -gt 0 ]; then
@@ -221,20 +233,14 @@ function check_submodule_valid()
         fi
     done
 
+    #if more than one match happend prompt the user for which match to delete
     if [ $NUM_SUBMODULES_MATCHES -gt 1 ];then
-        #TODO
         echo -e "${yellow}Found more than 1 match to${NC} $ENTERED_VALUE"
         prompt_module_num matchedPaths[@]
-    fi
-
-    for i in "${paths[@]}";do
-        SUBMODULE_LINE=$(echo "$i" | grep $SUBMODULE_TO_REMOVE)
-        if [ ${#SUBMODULE_LINE} -gt 0 ]; then
-            IS_SUBMODULE_FOUND=true
-            SUBMODULE_TO_REMOVE=$SUBMODULE_LINE
-        fi
-    done
-    if [ $IS_SUBMODULE_FOUND == false ];then
+        SUBMODULE_TO_REMOVE=${paths[`expr $PROMPT_CHOSEN_NUMBER - 1`]}
+        remove_submodule
+        exit 0
+    elif [ $NUM_SUBMODULES_MATCHES == 0 ];then
         echo -e "${red}Submodule :${NC} ${SUBMODULE_TO_REMOVE}${red} was not found.${NC}"
         exit 0
     fi
@@ -250,7 +256,7 @@ function check_submodule_valid()
 #   5) remove the submodule directory
 function remove_submodule()
 {
-    CURDIR=$(pwd)
+    local CURDIR=$(pwd)
     echo -e "${yellow}Deleting :${NC} $SUBMODULE_TO_REMOVE"
     #remove from .gitmodules
     parse_git_file_for_deleting_submodule_chunks $REPODIR/.gitmodules
@@ -277,23 +283,22 @@ function parse_git_file_for_deleting_submodule_chunks()
     local GIT_FILE_TO_EDIT=$1
 
     #read file line by line
-    LINE_NUM=0
+    local LINE_NUM=0
 
     #used this to avoid using subshell to avoid losing the arrays values
     exec < $GIT_FILE_TO_EDIT
 
     # the grep patterns used to find the submodule to delete within the submodules
-    SUBMODULE_PATTERN='submodule'
-    DESIRED_SUBMODULE_PATTERN=$SUBMODULE_TO_REMOVE
-    MARK_SUBMODULE_FOR_DELETION=false
+    local SUBMODULE_PATTERN='submodule'
+    local MARK_SUBMODULE_FOR_DELETION=false
     while read LINE ; do
 
         #increment the line to get
         LINE_NUM=`expr $LINE_NUM + 1`;
 
         #grep to get the line containg the name of the submodule
-        SUBMODULE_LINE=$(echo "$LINE" | grep $SUBMODULE_PATTERN)
-        DESIRED_SUBMODULE_LINE=$(echo "$LINE" | grep $DESIRED_SUBMODULE_PATTERN)
+        local SUBMODULE_LINE=$(echo "$LINE" | grep $SUBMODULE_PATTERN)
+        local DESIRED_SUBMODULE_LINE=$(echo "$LINE" | grep $SUBMODULE_TO_REMOVE)
 
         #assuming the wrong submodule
         if [ ${#SUBMODULE_LINE} -gt 0 ]; then
@@ -305,14 +310,15 @@ function parse_git_file_for_deleting_submodule_chunks()
             #flag this module for deletion
             MARK_SUBMODULE_FOR_DELETION=true
             #setting the line number we start deleting
-            MARK_DELETION_START=$LINE_NUM
+            local MARK_DELETION_START=$LINE_NUM
         fi
         
         #while in the module to delete setting the end of the deletion to this line
         if [ $MARK_SUBMODULE_FOR_DELETION == true ];then
-            MARK_DELETION_END=$LINE_NUM
+            local MARK_DELETION_END=$LINE_NUM
         fi
     done
+    #remove the desired part from the git files
     sed -i -e "$MARK_DELETION_START,$MARK_DELETION_END""d" $GIT_FILE_TO_EDIT
 
 }
