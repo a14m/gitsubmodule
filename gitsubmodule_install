@@ -15,11 +15,11 @@ function install_gitsubmodule()
 function copy_script_to_local_bin()
 {
     #changing the permission just in case
-    chmod -v 755 gitsubmodule
-    chmod -v 755 gitsubmodule_man
+    chmod -v 755 gitsubmodule 1>/dev/null 2>&1
+    chmod -v 755 gitsubmodule_man 1>/dev/null 2>&1
 
     #copy the script to the bin
-    cp gitsubmodule $SCRIPT_PATH
+    cp -v gitsubmodule $SCRIPT_PATH
     
     #create the man page for the script
     cp gitsubmodule_man $MAN_PATH/gitsubmodule.1

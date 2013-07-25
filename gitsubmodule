@@ -128,7 +128,6 @@ function show_help()
     echo -e "usage: gitsubmodule [options | options[args]]"
     echo -e ""
     echo -e "Options:"
-    echo -e " Genral Options:"
     echo -e "  -h,--help \t\tprint this help text and exit"
     echo -e "  --version \t\tprint this script version and exit"
     echo -e "  -d,--dir  \t\tprovide the directory of the repo by default it's the current directoy"
