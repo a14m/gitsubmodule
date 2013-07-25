@@ -19,7 +19,7 @@ REMOVE_FLAG=false
 #-r submodule flag indicator
 REMOVE_FLAG_SPECIFIC_SUBMODULE=false
 
-VERSION="2013.07.24"
+VERSION="0.1"
 
 #chosen submodule for deletion
 SUBMODULE_TO_REMOVE=
@@ -332,49 +332,11 @@ function remove_submodule()
 }
 
 #delete the submodule chunks in the specific files
+#using default git operation insetead of manually parsing file and deletion
 function parse_git_file_for_deleting_submodule_chunks()
 {
     local GIT_FILE_TO_EDIT=$1
-
-    #read file line by line
-    local LINE_NUM=0
-
-    #used this to avoid using subshell to avoid losing the arrays values
-    exec < $GIT_FILE_TO_EDIT
-
-    # the grep patterns used to find the submodule to delete within the submodules
-    local SUBMODULE_PATTERN='submodule'
-    local MARK_SUBMODULE_FOR_DELETION=false
-    while read LINE ; do
-
-        #increment the line to get
-        LINE_NUM=`expr $LINE_NUM + 1`;
-
-        #grep to get the line containg the name of the submodule
-        local SUBMODULE_LINE=$(echo "$LINE" | grep $SUBMODULE_PATTERN)
-        local DESIRED_SUBMODULE_LINE=$(echo "$LINE" | grep $SUBMODULE_TO_REMOVE)
-
-        #assuming the wrong submodule
-        if [ ${#SUBMODULE_LINE} -gt 0 ]; then
-            MARK_SUBMODULE_FOR_DELETION=false
-        fi
-        
-        #found the desired submodule to delete
-        if [[ ${#DESIRED_SUBMODULE_LINE} -gt 0 && ${#SUBMODULE_LINE} -gt 0 ]];then
-            #flag this module for deletion
-            MARK_SUBMODULE_FOR_DELETION=true
-            #setting the line number we start deleting
-            local MARK_DELETION_START=$LINE_NUM
-        fi
-        
-        #while in the module to delete setting the end of the deletion to this line
-        if [ $MARK_SUBMODULE_FOR_DELETION == true ];then
-            local MARK_DELETION_END=$LINE_NUM
-        fi
-    done
-    #remove the desired part from the git files
-    sed -i -e "$MARK_DELETION_START,$MARK_DELETION_END""d" $GIT_FILE_TO_EDIT
-
+    git config -f $GIT_FILE_TO_EDIT --remove-section submodule.$SUBMODULE_TO_REMOVE
 }
 
 #Main

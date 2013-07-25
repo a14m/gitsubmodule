@@ -9,6 +9,10 @@ Install
 * download the scripts zip
 * run `sudo ./gitsubmodule_install`
 
+Uninstall
+-
+run `sudo ./gitsubmodule_install --uninstall`
+
 Usage
 -
 `gitsubmodule [options | options[args]]`

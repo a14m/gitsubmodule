@@ -1,6 +1,17 @@
 #!/bin/bash
+
+#Constants
+MAN_PATH="/usr/local/share/man/man1"
+SCRIPT_PATH="/usr/local/bin"
+
+green='\033[0;32m'
+NC='\033[0m' # No Color
+
+#Functions
 function install_gitsubmodule()
 {
+    CUR_DIR=$(pwd)
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     if [[ -d $SCRIPT_PATH && -d $MAN_PATH ]];then
         copy_script_to_local_bin
     else
@@ -12,6 +23,15 @@ function install_gitsubmodule()
     fi
 }
 
+function uninstall_gitsubmodule()
+{
+    if [[ -f $SCRIPT_PATH/gitsubmodule && -f $MAN_PATH/gitsubmodule.1.gz ]];then
+        remove_script_from_local_bin
+    else
+        echo -e "already unistalled"
+    fi
+}
+
 function copy_script_to_local_bin()
 {
     #changing the permission just in case
@@ -19,21 +39,47 @@ function copy_script_to_local_bin()
     chmod -v 755 gitsubmodule_man 1>/dev/null 2>&1
 
     #copy the script to the bin
-    cp -v gitsubmodule $SCRIPT_PATH
+    cp $DIR/gitsubmodule $SCRIPT_PATH/
+    echo -e "${green}installed :${NC} $SCRIPT_PATH/gitsubmodule"
     
     #create the man page for the script
-    cp gitsubmodule_man $MAN_PATH/gitsubmodule.1
+    cp $DIR/gitsubmodule_man $MAN_PATH/gitsubmodule.1
     gzip $MAN_PATH/gitsubmodule.1
+}
+
+function remove_script_from_local_bin()
+{
+    rm $SCRIPT_PATH/gitsubmodule
+    rm $MAN_PATH/gitsubmodule.1.gz 1>/dev/null 2>&1
+    echo -e "${green}uninstalled :${NC} $SCRIPT_PATH/gitsubmodule"
+}
+
+function check_uninstall_flag()
+{
+
+    #check the flags user used
+    if [ $# -le 0 ];then
+        install_gitsubmodule
+    else
+        case "$1" in
+            --uninstall)
+                uninstall_gitsubmodule
+                exit 0
+                ;;
+            *)
+                echo -e "illegal option"
+                exit 0
+                ;;
+        esac
+    fi
 }
 
 # Main
 # Make sure only root can run our script
-MAN_PATH="/usr/local/share/man/man1"
-SCRIPT_PATH="/usr/local/bin/"
-
 if [ "$(id -u)" != "0" ]; then
     echo -e "This script must be run as root" 1>&2
     exit 1
 else
-    install_gitsubmodule
+    check_uninstall_flag $@
 fi
+
