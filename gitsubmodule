@@ -5,7 +5,7 @@
 #the directory to use script with
 REPODIR=$(pwd)
 #uncomment the next line to bind the script to the vim directory
-REPODIR="$HOME/testing"
+#REPODIR="$HOME/.vim"
 
 #-d flag indicator 
 DIR_FLAG=false

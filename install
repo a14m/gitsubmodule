@@ -1,0 +1,39 @@
+#!/bin/bash
+function install_gitsubmodule()
+{
+    if [[ -d $SCRIPT_PATH && -d $MAN_PATH ]];then
+        copy_script_to_local_bin
+    else
+        #TODO check if this will cause problem
+        mkdir -p $SCRIPT_PATH
+        mkdir -p $MAN_PATH
+        PATH=$PATH:$SCRIPT_PATH
+        copy_script_to_local_bin
+    fi
+}
+
+function copy_script_to_local_bin()
+{
+    #changing the permission just in case
+    chmod -v 755 gitsubmodule
+    chmod -v 755 gitsubmodule_man
+
+    #copy the script to the bin
+    cp gitsubmodule $SCRIPT_PATH
+    
+    #create the man page for the script
+    cp gitsubmodule_man $MAN_PATH/gitsubmodule.1
+    gzip $MAN_PATH/gitsubmodule.1
+}
+
+# Main
+# Make sure only root can run our script
+MAN_PATH="/usr/local/share/man/man1"
+SCRIPT_PATH="/usr/local/bin/"
+
+if [ "$(id -u)" != "0" ]; then
+    echo -e "This script must be run as root" 1>&2
+    exit 1
+else
+    install_gitsubmodule
+fi
