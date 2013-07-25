@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Gitsubmodule by artmees</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Gitsubmodule</h1>
+        <p>Complementary script to the 'git submodule' providing easy update and remove</p>
+
+        <p class="view"><a href="https://github.com/artmees/gitsubmodule">View the Project on GitHub <small>artmees/gitsubmodule</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/artmees/gitsubmodule/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/artmees/gitsubmodule/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/artmees/gitsubmodule">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>
+<a name="gitsubmodule" class="anchor" href="#gitsubmodule"><span class="octicon octicon-link"></span></a>gitsubmodule</h2>
+
+<p>Complementary script to the <code>git submodule</code> providing easy update and remove.</p>
+
+<ul>
+<li>
+<code>git submodule update</code> : doesn't pull the latest submodule as I expect it to do.</li>
+<li>
+<code>git submodule remove</code> : isn't there and every time I try to do it, I have to google how.</li>
+</ul><h2>
+<a name="install" class="anchor" href="#install"><span class="octicon octicon-link"></span></a>Install</h2>
+
+<p><code>sudo ./gitsubmodule_install</code></p>
+
+<h2>
+<a name="uninstall" class="anchor" href="#uninstall"><span class="octicon octicon-link"></span></a>Uninstall</h2>
+
+<p><code>sudo ./gitsubmodule_install --uninstall</code></p>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p><code>gitsubmodule [options | options[args]]</code></p>
+
+<h3>
+<a name="options" class="anchor" href="#options"><span class="octicon octicon-link"></span></a>options</h3>
+
+<table>
+<thead><tr>
+<th>option</th>
+<th>desc.</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>-h,--help</code></td>
+<td>displays the help</td>
+</tr>
+<tr>
+<td><code>--version</code></td>
+<td>dispaays the version number</td>
+</tr>
+<tr>
+<td><code>-d,--dir =&lt;args&gt;</code></td>
+<td>provides the directory to the repo by default it's the current directory</td>
+</tr>
+<tr>
+<td><code>-u,--update,update</code></td>
+<td>issue update of the available submodules in the repo</td>
+</tr>
+<tr>
+<td><code>-r,--remove,remove</code></td>
+<td>prompt user to select one of the <strong>available</strong> submodules to delete</td>
+</tr>
+<tr>
+<td><code>-r,--remove,remove =&lt;args&gt;</code></td>
+<td>prompt user to select one of the <strong>matched</strong> submodules to delete</td>
+</tr>
+</tbody>
+</table><p>See <code>gitsubmodule [remove|update] --help</code> for specific help info</p>
+
+<h2>
+<a name="update" class="anchor" href="#update"><span class="octicon octicon-link"></span></a>Update</h2>
+
+<p>Updates the available submodules found in the .gitmodules file</p>
+
+<h4>
+<a name="procedure-" class="anchor" href="#procedure-"><span class="octicon octicon-link"></span></a>Procedure :</h4>
+
+<ol>
+<li>cd into the submodule directory</li>
+<li>stash the changes in the submodule</li>
+<li>check out master branch to fix an issue where you are on (no-branch)</li>
+<li>git pull latest changes</li>
+<li>reapply stashed changes</li>
+</ol><h2>
+<a name="remove" class="anchor" href="#remove"><span class="octicon octicon-link"></span></a>Remove</h2>
+
+<ul>
+<li>If no submodule was passed the script will find all the <strong>available submodules</strong>, and will prompt the user to choose one of them to delete.</li>
+<li>If submodule was provided the script will find all the <strong>available matches</strong> to this submodule,</li>
+</ul><p>then it will prompt the user to choose one of the matches to delete it if more than 1 match occured, </p>
+
+<p>or will <strong>automatically delete if only 1 match was found</strong>.</p>
+
+<h4>
+<a name="procedure--1" class="anchor" href="#procedure--1"><span class="octicon octicon-link"></span></a>Procedure :</h4>
+
+<ol>
+<li>remove the submodule part from .gitmodules</li>
+<li>remove the submodule part from .git/config</li>
+<li>remove the the submodule cached directory</li>
+<li>remove the submodule from .git/modules directory</li>
+<li>commit the changes to the modified files only</li>
+<li>remove the submodule directory</li>
+</ol><h2>
+<a name="examples" class="anchor" href="#examples"><span class="octicon octicon-link"></span></a>Examples</h2>
+
+<p><code>gitsubmodule update -d ~/.vim</code> updates .vim submodules from outside <code>~/.vim</code></p>
+
+<p><code>gitsubmodule update help</code> display help of the update</p>
+
+<p><code>gitsubmodule remove</code> prompt the user to remove one of the available submodules</p>
+
+<p><code>gitsubmodule -d ~/.vim -r nerd</code> show the matched submodules in the vim ex(nerdTree,nerdCommenter), if only one of them is available remove it and commit</p>
+
+<h2>
+<a name="bugs" class="anchor" href="#bugs"><span class="octicon octicon-link"></span></a>Bugs</h2>
+
+<p>Please report found bugs to <a href="https://github.com/artmees/gitsubmodule/issues">https://github.com/artmees/gitsubmodule/issues</a></p>
+
+<h2>
+<a name="copyright" class="anchor" href="#copyright"><span class="octicon octicon-link"></span></a>COPYRIGHT</h2>
+
+<p>Copyright (C) 2013, Ahmed Abdel Razzak. All rights reserved.</p>
+
+<p>This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the
+Free Software Foundation; version 2 of the License.</p>
+
+<p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.</p>
+
+<p>You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59
+Temple Place, Suite 330, Boston, MA 02111-1307 USA or see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/artmees">artmees</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-42434744-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
