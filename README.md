@@ -6,9 +6,10 @@ Complementary script to the `git submodule` providing easy update and remove.
 
 usage
 ---
-gitsubmodule [options | options[args]]
+`gitsubmodule [options | options[args]]`
 
-######options
-* `-h,--help`    displays the help
-* `--version`    dispaays the version number
-* `-d,--dir`     provides the directory to the repo by default it's the current directory 
+###options
+
+| `-h,--help` |  displays the help|
+| `--version` |  dispaays the version number|
+| `-d,--dir`  |  provides the directory to the repo by default it's the current directory |
