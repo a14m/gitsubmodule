@@ -98,12 +98,12 @@ function show_remove_help()
     echo -e "or will automatically delete if only 1 match found"
     echo -e ""
     echo -e "procedure :"
-    echo -e "   1) remove the submodule part from .gitmodules"
-    echo -e "   2) remove the submodule part from .git/config"
-    echo -e "   3) remove the the submodule cached directory"
-    echo -e "   4) remove the submodule from .git/modules directory"
-    echo -e "   5) commit the changes to the modified files only"
-    echo -e "   6) remove the submodule directory"
+    echo -e "  1) remove the submodule part from .gitmodules"
+    echo -e "  2) remove the submodule part from .git/config"
+    echo -e "  3) remove the the submodule cached directory"
+    echo -e "  4) remove the submodule from .git/modules directory"
+    echo -e "  5) commit the changes to the modified files only"
+    echo -e "  6) remove the submodule directory"
     exit 0
 }
 
