@@ -10,6 +10,8 @@ usage
 
 ###options
 
+| option      |  desc. |
+|-------------|--------|
 | `-h,--help` |  displays the help|
 | `--version` |  dispaays the version number|
 | `-d,--dir`  |  provides the directory to the repo by default it's the current directory |
