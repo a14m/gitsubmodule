@@ -6,12 +6,11 @@ Complementary script to the `git submodule` providing easy update and remove.
  
 Install
 -
-* download the scripts zip
-* run `sudo ./gitsubmodule_install`
+`sudo ./gitsubmodule_install`
 
 Uninstall
 -
-run `sudo ./gitsubmodule_install --uninstall`
+`sudo ./gitsubmodule_install --uninstall`
 
 Usage
 -
@@ -34,7 +33,7 @@ Update
 -
 Updates the available submodules found in the .gitmodules file
 
-######Procedure :
+####Procedure :
 1. cd into the submodule directory
 2. stash the changes in the submodule
 3. check out master branch to fix an issue where you are on (no-branch)
@@ -50,7 +49,7 @@ then it will prompt the user to choose one of the matches to delete it if more t
 
 or will __automatically delete if only 1 match was found__.
 
-######Procedure :
+####Procedure :
 1. remove the submodule part from .gitmodules
 2. remove the submodule part from .git/config
 3. remove the the submodule cached directory
@@ -67,6 +66,10 @@ Examples
 `gitsubmodule remove` prompt the user to remove one of the available submodules
 
 `gitsubmodule -d ~/.vim -r nerd` show the matched submodules in the vim ex(nerdTree,nerdCommenter), if only one of them is available remove it and commit
+
+Bugs
+-
+Please report found bugs to <https://github.com/artmees/gitsubmodule/issues>
 
 COPYRIGHT
 ---------
