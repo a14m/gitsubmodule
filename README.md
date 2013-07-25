@@ -5,7 +5,7 @@ Complementary script to the `git submodule` providing easy update and remove.
 * `git submodule remove` : isn't there and every time I try to do it, I have to google how.
 
 Usage
----
+-
 `gitsubmodule [options | options[args]]`
 
 ###options
@@ -16,13 +16,13 @@ Usage
 | `--version` |  dispaays the version number|
 | `-d,--dir =<args>`  |  provides the directory to the repo by default it's the current directory |
 | `-u,--update,update` | issue update of the available submodules in the repo |
-| `-r,--remove,remove` | prompt user to select one of the__ available__ submodules to delete |
+| `-r,--remove,remove` | prompt user to select one of the __available__ submodules to delete |
 | `-r,--remove,remove =<args>`| prompt user to select one of the __matched__ submodules to delete |
 
-See 'gitsubmodule [remove|update] --help ' for specific help info
+See `gitsubmodule [remove|update] --help ` for specific help info
 
 Update
----
+-
 Updates the available submodules found in the .gitmodules file
 
 ######Procedure :
@@ -33,7 +33,7 @@ Updates the available submodules found in the .gitmodules file
 5. reapply stashed changes
 
 Remove
----
+-
 * If no submodule was passed the script will find all the __available submodules__, and will prompt the user to choose one of them to delete.
 * If submodule was provided the script will find all the __available matches__ to this submodule,
 
@@ -50,7 +50,7 @@ or will __automatically delete if only 1 match was found__.
 6. remove the submodule directory
 
 Examples
----
+-
 `gitsubmodule update -d ~/.vim` updates .vim submodules from outside `~/.vim`
 
 `gitsubmodule update help` display help of the update
