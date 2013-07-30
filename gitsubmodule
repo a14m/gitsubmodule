@@ -312,11 +312,11 @@ function remove_submodule()
 {
     local CURDIR=$(pwd)
     echo -e "${yellow}Deleting :${NC} $SUBMODULE_TO_REMOVE"
+
+    cd $REPODIR
     #remove from .gitmodules
     parse_git_file_for_deleting_submodule_chunks $REPODIR/.gitmodules
     
-    cd $REPODIR
-        #git stash 1>/dev/null 2>&1
     git add $REPODIR/.gitmodules
 
     parse_git_file_for_deleting_submodule_chunks $REPODIR/.git/config
