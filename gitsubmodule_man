@@ -1,6 +1,6 @@
 .\" Manpage for gitsubmodule.
 .\" Contact eng.abdelrazzak@gmail.com to correct errors or typos.
-.TH man 1 "24 July 2013" "0.1" "gitsubmodule man page"
+.TH man 1 "24 July 2013" "0.2" "gitsubmodule man page"
 .SH NAME
     gitsubmodule \- add update and remove opertaions. complimentary to git submodule command.
 .SH SYNOPSIS

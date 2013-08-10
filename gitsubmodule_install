@@ -41,10 +41,12 @@ function copy_script_to_local_bin()
     #copy the script to the bin
     cp $DIR/gitsubmodule $SCRIPT_PATH/
     echo -e "${green}installed :${NC} $SCRIPT_PATH/gitsubmodule"
+    echo -e "Try ${green}man gitsubmodule ${NC}"
     
     #create the man page for the script
-    cp $DIR/gitsubmodule_man $MAN_PATH/gitsubmodule.1
-    gzip $MAN_PATH/gitsubmodule.1
+    cp $DIR/gitsubmodule_man $DIR/gitsubmodule.1
+    gzip $DIR/gitsubmodule.1
+    mv $DIR/gitsubmodule.1.gz $MAN_PATH/gitsubmodule.1.gz
 }
 
 function remove_script_from_local_bin()
