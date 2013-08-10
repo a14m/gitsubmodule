@@ -19,7 +19,7 @@ REMOVE_FLAG=false
 #-r submodule flag indicator
 REMOVE_FLAG_SPECIFIC_SUBMODULE=false
 
-VERSION="0.1"
+VERSION="0.2"
 
 #chosen submodule for deletion
 SUBMODULE_TO_REMOVE=
@@ -75,7 +75,7 @@ function check_flags()
                 shift
                 ;;
             --version)
-                echo -e "gitsubmodule version $VERSION"
+                echo -e "$VERSION"
                 exit 0
                 ;;
             *)
@@ -272,7 +272,6 @@ function update_all_submodules()
 # check if the entered submodule is valid
 function check_submodule_valid()
 {
-    #TODO 
     local ENTERED_VALUE=$SUBMODULE_TO_REMOVE
     declare -a paths=("${!1}")
     #check if valid submodule was provided
@@ -315,11 +314,12 @@ function remove_submodule()
 
     cd $REPODIR
     #remove from .gitmodules
-    parse_git_file_for_deleting_submodule_chunks $REPODIR/.gitmodules
+    git config -f $REPODIR/.gitmodules --remove-section submodule.$SUBMODULE_TO_REMOVE
     
     git add $REPODIR/.gitmodules
 
-    parse_git_file_for_deleting_submodule_chunks $REPODIR/.git/config
+    git config -f $REPODIR/.git/config --remove-section submodule.$SUBMODULE_TO_REMOVE
+
     git rm --cached $REPODIR/$SUBMODULE_TO_REMOVE 1>/dev/null 2>&1
     rm -rf $REPODIR/.git/modules/$SUBMODULE_TO_REMOVE 1>/dev/null 2>&1
     rm -rf $REPODIR/$SUBMODULE_TO_REMOVE 1>/dev/null 2>&1
@@ -329,14 +329,6 @@ function remove_submodule()
     cd $CURDIR
     echo -e "${green}Deleted :${NC} $SUBMODULE_TO_REMOVE ${green}successfully${NC}"
     echo -e "\n\t${cyan}#### Please push the changes #### ${NC}"
-}
-
-#delete the submodule chunks in the specific files
-#using default git operation insetead of manually parsing file and deletion
-function parse_git_file_for_deleting_submodule_chunks()
-{
-    local GIT_FILE_TO_EDIT=$1
-    git config -f $GIT_FILE_TO_EDIT --remove-section submodule.$SUBMODULE_TO_REMOVE
 }
 
 #Main
