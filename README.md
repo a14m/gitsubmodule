@@ -63,9 +63,13 @@ or will __prompt the user on deleting the matched submodule if only 1 match was 
 Examples
 -
 `gitsubmodule update ner` prompt the user to update submodules that matches this search ex. `nerdTree, nerdCommenter`.
+
 `gitsubmodule update help` display help of the update.
+
 `gitsubmodule remove` prompt the user to remove one of the available submodules.
+
 `gitsubmodule remove nerd` show the matched submodules in the vim ex. `nerdTree,nerdCommenter`.
+
  if only one of them is available ,prompt removing it and commit.
  if both are available prompt the user to remove one of them and commit.
 
