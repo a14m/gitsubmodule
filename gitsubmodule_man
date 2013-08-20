@@ -1,6 +1,6 @@
 .\" Manpage for gitsubmodule.
 .\" Contact eng.abdelrazzak@gmail.com to correct errors or typos.
-.TH man 1 "24 July 2013" "0.2" "gitsubmodule man page"
+.TH man 1 "20 August 2013" "0.3" "gitsubmodule man page"
 .SH NAME
     gitsubmodule \- add update and remove opertaions. complimentary to git submodule command.
 .SH SYNOPSIS
@@ -9,8 +9,9 @@
     this script easen up some of the common hard or long  to do operations in git submodule
     like updating the submodules or removing them
 .SH EXAMPLES
-    gitsubmodule update -d ~/.vim 
-        updates vim submodules for example
+    gitsubmodule update ner
+        prompt the user to update submodules that matches this search
+        ex. nerdTree, nerdCommenter
     gitsubmodule update help
         display help of the update
 
@@ -19,7 +20,7 @@
 
     gitsubmodule -d ~/.vim -r nerd
         show the matched submodules in the vim ex(nerdTree,nerdCommenter)
-        if only one of them is available remove it and commit 
+        if only one of them is available ,prompt removing it and commit 
 .SH SEE ALSO
     git(1), git submodule(1)
 .SH BUGS

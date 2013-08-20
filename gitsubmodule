@@ -18,11 +18,13 @@ REMOVE_FLAG=false
 
 #-r submodule flag indicator
 REMOVE_FLAG_SPECIFIC_SUBMODULE=false
+UPDATE_FLAG_SPECIFIC_SUBMODULE=false
 
-VERSION="0.2"
+VERSION="0.3"
 
 #chosen submodule for deletion
 SUBMODULE_TO_REMOVE=
+SUBMODULE_TO_UPDATE=
 
 #some colors used in the echo
 red='\033[0;31m'
@@ -57,10 +59,13 @@ function check_flags()
                 UPDATE_FLAG=true
                 shift
                 if test $# -gt 0; then
-                    if [ $1 == '--help' ];then
+                    UPDATE_FLAG_SPECIFIC_SUBMODULE=true
+                    SUBMODULE_TO_UPDATE=$1
+                    if [ $SUBMODULE_TO_UPDATE == '--help' ];then
                         show_update_help
                     fi
                 fi
+                shift
                 ;;
             -r|--remove|remove)
                 shift
@@ -94,8 +99,8 @@ function show_remove_help()
     echo -e "if no submodule was passed the script will find all the available submodules"
     echo -e "and will prompt the user to choose one of them to delete"
     echo -e "if submodule was provided the script will find all the available matches to this submodule"
-    echo -e "and will prompt the user to choose one of the matches to delete if more than 1 match occured"
-    echo -e "or will automatically delete if only 1 match found"
+    echo -e "and will prompt the user to choose one of the matches to delete"
+    echo -e "or confirm deletion if only one match occured"
     echo -e ""
     echo -e "procedure :"
     echo -e "  1) remove the submodule part from .gitmodules"
@@ -110,7 +115,10 @@ function show_remove_help()
 #gitsubmodule update --help
 function show_update_help()
 {
-    echo -e "usage: gitsubmodule -u|--updtae|update [--help]"
+    echo -e "usage: gitsubmodule -u|--updtae|update [--help|=<submodule>]"
+    echo -e "if submodule was provided the script will find all the available matches to this submodule"
+    echo -e "and will prompt the user to choose one of the matches to update"
+    echo -e "or confirm updating if only one match occured"
     echo -e ""
     echo -e "Updates the available submodules found in the .gitmodules file"
     echo -e "procedure :"
@@ -133,9 +141,11 @@ function show_help()
     echo -e "  -d,--dir  \t\tprovide the directory of the repo by default it's the current directoy"
     echo -e "  -u,--update,update \tissue update of the available submodules in the repo"
     echo -e "  \t\t\tcan also check update help using 'gitsubmodule update --help'"
+    echo -e "  -u,--update,update XXX\t update the 'XXX' submodule in the repo"
+    echo -e "  \t\t\tor prompt the user to choose one of the 'XXX' matches to update"
     echo -e "  -r,--remove,remove \tprompt the user to choose one of the available submodules to remove"
-    echo -e "  \t\t\tgitsubmodule remove XXX will search for matching to XXX and will remove if only found 1 match found"
-    echo -e "  \t\t\tand will prompt user to select one of the matches if more than 1 match found"
+    echo -e "  \t\t\tgitsubmodule remove XXX will search for matching to 'XXX' and will prompt the user before deletion"
+    echo -e "  \t\t\tor will prompt user to select one of the matches if more than 1 match found"
     echo -e "  \t\t\tcan also check remove help using 'gitsubmodule remove --help'"
     echo -e ""
     echo -e "See 'gitsubmodule [remove|update] --help ' for specific help info"
@@ -208,6 +218,10 @@ function parse_git_modules_file()
 
     #issue update procedure
     if [ $UPDATE_FLAG == true ];then
+        if [ $UPDATE_FLAG_SPECIFIC_SUBMODULE == true ];then
+            echo -e "${green}Checking :${NC} $SUBMODULE_TO_UPDATE"
+            check_submodule_valid_update paths[@]
+        fi
         update_all_submodules paths[@] 
     fi
 
@@ -215,10 +229,11 @@ function parse_git_modules_file()
     if [ $REMOVE_FLAG_SPECIFIC_SUBMODULE == true ];then
         #a submodule have been provided in the args
         echo -e "${green}Checking :${NC} $SUBMODULE_TO_REMOVE"
-        check_submodule_valid paths[@]
+        check_submodule_valid_remove paths[@]
     elif [ $REMOVE_FLAG == true ];then
         #remove is issued but without providing the submodule to remove
         #get the module you want to delete from the list of available modules
+        ACTION='remove'
         prompt_module_num paths[@]
         SUBMODULE_TO_REMOVE=${paths[`expr $PROMPT_CHOSEN_NUMBER - 1`]}
         remove_submodule
@@ -237,11 +252,78 @@ function prompt_module_num()
             MODULE_NUM=`expr $MODULE_NUM + 1`;
             echo -e " $MODULE_NUM) $i"
         done
-        read -p "Please choose the submodule you want to remove : " PROMPT_CHOSEN_NUMBER
+        read -p "Please choose the submodule number you want to $ACTION : " PROMPT_CHOSEN_NUMBER
         if [[ $PROMPT_CHOSEN_NUMBER -le $MODULE_NUM && $PROMPT_CHOSEN_NUMBER -gt 0 ]];then
             return $PROMPT_CHOSEN_NUMBER
         fi
     done
+}
+
+function prompt_action()
+{
+
+    while true;do
+        read -p "Are you sure you want to $ACTION $1 ? (yes/no) " YESNO
+        shopt -s nocasematch
+        if [[ $YESNO == "yes" || $YESNO == "y" ]];then
+            return
+        elif [[ $YESNO == "no" || $YESNO == "n" ]];then
+            exit 0
+        fi
+        shopt -u nocasematch
+    done
+}
+
+#updating specific submodule
+function check_submodule_valid_update()
+{
+    local ENTERED_VALUE=$SUBMODULE_TO_UPDATE
+    ACTION='update'
+    declare -a paths=("${!1}")
+    #check if valid submodule was provided
+    local NUM_SUBMODULES_MATCHES=0
+
+    #check more than 1 match happend
+    for i in "${paths[@]}";do
+        DESIRED_SUBMODULE_LINE=$(echo "$i" | grep $SUBMODULE_TO_UPDATE )
+        if [ ${#DESIRED_SUBMODULE_LINE} -gt 0 ]; then
+            matchedPaths[$NUM_SUBMODULES_MATCHES]=$i
+            NUM_SUBMODULES_MATCHES=`expr $NUM_SUBMODULES_MATCHES + 1`
+        fi
+    done
+
+    #if more than one match happend prompt the user for which match to delete
+    if [ $NUM_SUBMODULES_MATCHES -gt 1 ];then
+        echo -e "${yellow}Found more than 1 match to${NC} $ENTERED_VALUE"
+        prompt_module_num matchedPaths[@]
+        SUBMODULE_TO_UPDATE=${matchedPaths[`expr $PROMPT_CHOSEN_NUMBER - 1`]}
+        update_submodule
+        exit 0
+    elif [ $NUM_SUBMODULES_MATCHES == 0 ];then
+        echo -e "${red}Submodule :${NC} ${SUBMODULE_TO_UPDATE}${red} was not found.${NC}"
+        exit 0
+    fi
+    SUBMODULE_TO_UPDATE=${matchedPaths[0]}
+    prompt_action $SUBMODULE_TO_UPDATE
+    update_submodule
+}
+
+#updatin specific submodule logic
+function update_submodule()
+{
+    local CURDIR=$(pwd)
+    echo -e "${yellow}Updating :${NC} $SUBMODULE_TO_UPDATE"
+
+    cd $REPODIR/$SUBMODULE_TO_UPDATE 1>/dev/null 2>&1
+    git stash 1>/dev/null 2>&1
+    git checkout master 1>/dev/null 2>&1
+    echo -e "`git pull`\n"
+    git stash pop 1>/dev/null 2>&1
+
+    cd $CURDIR 1>/dev/null 2>&1
+    echo -e "${green}Updated :${NC} $SUBMODULE_TO_UPDATE ${green}successfully${NC}"
+    echo -e "\n\t${cyan}#### Please commit and push the changes #### ${NC}"
+    exit 0
 }
 
 #update submodule
@@ -262,17 +344,18 @@ function update_all_submodules()
         git stash 1>/dev/null 2>&1
         git checkout master 1>/dev/null 2>&1
         echo -e "`git pull`\n"
-        git pull 1>/dev/null 2>&1
-        git stash apply 1>/dev/null 2>&1
+        git stash pop 1>/dev/null 2>&1
     done
-    cd $CURDIR
+    cd $CURDIR 1>/dev/null 2>&1
     echo -e "\n\t${cyan}#### Please commit and push your changes now if any #### ${NC}"
+    exit 0
 }
 
 # check if the entered submodule is valid
-function check_submodule_valid()
+function check_submodule_valid_remove()
 {
     local ENTERED_VALUE=$SUBMODULE_TO_REMOVE
+    ACTION='remove'
     declare -a paths=("${!1}")
     #check if valid submodule was provided
     local NUM_SUBMODULES_MATCHES=0
@@ -290,13 +373,15 @@ function check_submodule_valid()
     if [ $NUM_SUBMODULES_MATCHES -gt 1 ];then
         echo -e "${yellow}Found more than 1 match to${NC} $ENTERED_VALUE"
         prompt_module_num matchedPaths[@]
-        SUBMODULE_TO_REMOVE=${paths[`expr $PROMPT_CHOSEN_NUMBER - 1`]}
+        SUBMODULE_TO_REMOVE=${matchedPaths[`expr $PROMPT_CHOSEN_NUMBER - 1`]}
         remove_submodule
         exit 0
     elif [ $NUM_SUBMODULES_MATCHES == 0 ];then
         echo -e "${red}Submodule :${NC} ${SUBMODULE_TO_REMOVE}${red} was not found.${NC}"
         exit 0
     fi
+    SUBMODULE_TO_REMOVE=${matchedPaths[0]}
+    prompt_action $SUBMODULE_TO_REMOVE
     remove_submodule
 }
 
@@ -326,9 +411,10 @@ function remove_submodule()
 
     git commit -m "Removed submodule $SUBMODULE_TO_REMOVE using gitsubmodule script" 1>/dev/null 2>&1 
 
-    cd $CURDIR
+    cd $CURDIR 1>/dev/null 2>&1
     echo -e "${green}Deleted :${NC} $SUBMODULE_TO_REMOVE ${green}successfully${NC}"
     echo -e "\n\t${cyan}#### Please push the changes #### ${NC}"
+    exit 0
 }
 
 #Main
