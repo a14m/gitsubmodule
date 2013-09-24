@@ -24,7 +24,7 @@ Usage
 | `--version` |  dispaays the version number|
 | `-d,--dir =<args>`  |  provides the directory to the repo by default it's the current directory |
 | `-u,--update,update` | issue update of the available submodules in the repo |
-| `-u,--update,update =<args>` | rompt user to select one of the __matched__ submodules to update |
+| `-u,--update,update =<args>` | prompt user to select one of the __matched__ submodules to update |
 | `-r,--remove,remove` | prompt user to select one of the __available__ submodules to delete |
 | `-r,--remove,remove =<args>`| prompt user to select one of the __matched__ submodules to delete |
 
