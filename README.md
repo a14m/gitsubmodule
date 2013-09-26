@@ -1,7 +1,8 @@
 gitsubmodule
 ------------
 Complementary script to the `git submodule` providing easy update and remove.
-* `git submodule update` : doesn't pull the latest submodule as I expect it to do.
+* `git submodule update` : doesn't pull the latest submodules as I expect it to do.
+* `git submodule update --remote` : updated __all__ the submodules avaialble.
 * `git submodule remove` : isn't there and every time I try to do it, I have to google how.
  
 Install
@@ -18,17 +19,18 @@ Usage
 
 ###options
 
-| option      |  desc. |
-|-------------|--------|
-| `-h,--help` |  displays the help|
-| `--version` |  dispaays the version number|
-| `-d,--dir =<args>`  |  provides the directory to the repo by default it's the current directory |
-| `-u,--update,update` | issue update of the available submodules in the repo |
-| `-u,--update,update =<args>` | prompt user to select one of the __matched__ submodules to update |
-| `-r,--remove,remove` | prompt user to select one of the __available__ submodules to delete |
-| `-r,--remove,remove =<args>`| prompt user to select one of the __matched__ submodules to delete |
+| option      | args? |  desc. |
+|-------------|-------|--------|
+| `-h,--help` |  | displays the help|
+| `--version` |  | dispaays the version number|
+| `-d,--dir ` | `repoDir`  |  provides the directory to the repo by default it's the current directory |
+| `-u,--update,update` | | issue update of the available submodules in the repo |
+| `-u,--update,update` | `submodule_name` | prompt user to select one of the __matched submodule names__ submodules to update |
+| `-u,--update,update` | `--help` | display `gitsubmodule update` specific help |
+| `-r,--remove,remove` || prompt user to select one of the __available__ submodules to delete |
+| `-r,--remove,remove`| `submodule_name`| prompt user to select one of the __matched submodule names__ submodules to delete |
+| `-r,--remove,remove`| `--help` | display `gitsubmodule remove` specific help |
 
-See `gitsubmodule [remove|update] --help ` for specific help info
 
 Update
 -
@@ -62,16 +64,21 @@ or will __prompt the user on deleting the matched submodule if only 1 match was 
 
 Examples
 -
-`gitsubmodule update ner` prompt the user to update submodules that matches this search ex. `nerdTree, nerdCommenter`.
+`gitsubmodule update` issue update to all the submodules available.
 
-`gitsubmodule update help` display help of the update.
+`gitsubmodule update nerd` prompt the user to update submodules that matches this search ex. `nerdTree, nerdCommenter`.
+
+`gitsubmodule update --help` display help of the update.
 
 `gitsubmodule remove` prompt the user to remove one of the available submodules.
 
 `gitsubmodule remove nerd` show the matched submodules in the vim ex. `nerdTree,nerdCommenter`.
-
  if only one of them is available ,prompt removing it and commit.
  if both are available prompt the user to remove one of them and commit.
+
+
+`gitsubmodule remove --help` display help of the remove.
+
 
 Bugs
 -
