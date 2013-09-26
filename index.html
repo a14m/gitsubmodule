@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="google-site-verification" content="Abm59KAfwdliAe6LADuUAn1h6y9y28Uh7Af0gw8PNIw" />
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -17,7 +16,7 @@
     <div class="wrapper">
       <header>
         <h1>Gitsubmodule</h1>
-        <p>Complementary script to the &#39;git submodule&#39; providing easy update and remove</p>
+        <p>Complementary script to the 'git submodule' providing easy update and remove</p>
 
         <p class="view"><a href="https://github.com/artmees/gitsubmodule">View the Project on GitHub <small>artmees/gitsubmodule</small></a></p>
 
@@ -36,7 +35,9 @@
 
 <ul>
 <li>
-<code>git submodule update</code> : doesn't pull the latest submodule as I expect it to do.</li>
+<code>git submodule update</code> : doesn't pull the latest submodules as I expect it to do.</li>
+<li>
+<code>git submodule update --remote</code> : updated <strong>all</strong> the submodules avaialble.</li>
 <li>
 <code>git submodule remove</code> : isn't there and every time I try to do it, I have to google how.</li>
 </ul><h2>
@@ -60,39 +61,59 @@
 <table>
 <thead><tr>
 <th>option</th>
+<th>args?</th>
 <th>desc.</th>
 </tr></thead>
 <tbody>
 <tr>
-<td><code>-h,--help</code></td>
+<td><code>--help, -h</code></td>
+<td></td>
 <td>displays the help</td>
 </tr>
 <tr>
 <td><code>--version</code></td>
+<td></td>
 <td>dispaays the version number</td>
 </tr>
 <tr>
-<td><code>-d,--dir =&lt;args&gt;</code></td>
+<td><code>--dir, -d</code></td>
+<td><code>repoDir</code></td>
 <td>provides the directory to the repo by default it's the current directory</td>
 </tr>
 <tr>
-<td><code>-u,--update,update</code></td>
+<td><code>-u, update</code></td>
+<td></td>
 <td>issue update of the available submodules in the repo</td>
 </tr>
 <tr>
-<td><code>-u,--update,update =&lt;args&gt;</code></td>
-<td>prompt user to select one of the <strong>matched</strong> submodules to update</td>
+<td><code>-u, update</code></td>
+<td><code>submodule_name</code></td>
+<td>prompt user to select one of the <strong>matched submodule names</strong> submodules to update</td>
 </tr>
 <tr>
-<td><code>-r,--remove,remove</code></td>
+<td><code>-u, update</code></td>
+<td><code>--help</code></td>
+<td>display <code>gitsubmodule update</code> specific help</td>
+</tr>
+<tr>
+<td><code>-r, remove</code></td>
+<td></td>
 <td>prompt user to select one of the <strong>available</strong> submodules to delete</td>
 </tr>
 <tr>
-<td><code>-r,--remove,remove =&lt;args&gt;</code></td>
-<td>prompt user to select one of the <strong>matched</strong> submodules to delete</td>
+<td><code>-r, remove</code></td>
+<td><code>submodule_name</code></td>
+<td>prompt user to select one of the <strong>matched submodule names</strong> submodules to delete</td>
+</tr>
+<tr>
+<td><code>-r, remove</code></td>
+<td><code>--help</code></td>
+<td>display <code>gitsubmodule remove</code> specific help</td>
 </tr>
 </tbody>
-</table><p>See <code>gitsubmodule [remove|update] --help</code> for specific help info</p>
+</table><p>passing <code>gitsubmodule --remove</code> is equivalent to <code>gitsubmodule remove</code></p>
+
+<p>passing <code>gitsubmodule --update</code> is equivalent to <code>gitsubmodule update</code></p>
 
 <h2>
 <a name="update" class="anchor" href="#update"><span class="octicon octicon-link"></span></a>Update</h2>
@@ -133,16 +154,19 @@ if more than 1 match occured</li>
 </ol><h2>
 <a name="examples" class="anchor" href="#examples"><span class="octicon octicon-link"></span></a>Examples</h2>
 
-<p><code>gitsubmodule update ner</code> prompt the user to update submodules that matches this search ex. <code>nerdTree, nerdCommenter</code>.</p>
+<p><code>gitsubmodule update</code> issue update to all the submodules available.</p>
 
-<p><code>gitsubmodule update help</code> display help of the update.</p>
+<p><code>gitsubmodule update nerd</code> prompt the user to update submodules that matches this search ex. <code>nerdTree, nerdCommenter</code>.</p>
+
+<p><code>gitsubmodule update --help</code> display help of the update.</p>
 
 <p><code>gitsubmodule remove</code> prompt the user to remove one of the available submodules.</p>
 
-<p><code>gitsubmodule remove nerd</code> show the matched submodules in the vim ex. <code>nerdTree,nerdCommenter</code>.</p>
-
-<p>if only one of them is available ,prompt removing it and commit.
+<p><code>gitsubmodule remove nerd</code> show the matched submodules in the vim ex. <code>nerdTree,nerdCommenter</code>.
+ if only one of them is available ,prompt removing it and commit.
  if both are available prompt the user to remove one of them and commit.</p>
+
+<p><code>gitsubmodule remove --help</code> display help of the remove.</p>
 
 <h2>
 <a name="bugs" class="anchor" href="#bugs"><span class="octicon octicon-link"></span></a>Bugs</h2>
