@@ -22,7 +22,7 @@ Usage
 | option      | args? |  desc. |
 |-------------|-------|--------|
 | `-h,--help` |  | displays the help|
-| `--version` |  | dispaays the version number|
+| `--version` |  | displays the version number|
 | `-d,--dir ` | `repoDir`  |  provides the directory to the repo by default it's the current directory |
 | `-u,--update,update` | | issue update of the available submodules in the repo |
 | `-u,--update,update` | `submodule_name` | prompt user to select one of the __matched submodule names__ submodules to update |
