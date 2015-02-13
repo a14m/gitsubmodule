@@ -2,7 +2,7 @@ gitsubmodule
 ------------
 Complementary script to the `git submodule` providing easy update and remove.
 * `git submodule update` : doesn't pull the latest submodules as I expect it to do.
-* `git submodule update --remote` : updated __all__ the submodules avaialble.
+* `git submodule update --remote` : updated __all__ the submodules available.
 * `git submodule remove` : isn't there and every time I try to do it, I have to google how.
  
 Install
